@@ -46,7 +46,9 @@ struct ConstructorFixture
   static bool function_called;
   static int mock_num_functions(void);
   static void mock_copy_function_key(char *destination, int function_index);
-  static int mock_call_function(const char *function_key, const char *arg);
+  static void mock_request_execution(const char *function_key, const char *arg);
+  static bool mock_is_retval_avail(void);
+  static int mock_get_retval(void);
   static int mock_num_variables(void);
   static void mock_copy_variable_key(char *destination, int variable_index);
   static void *mock_get_variable(const char *variable_key);

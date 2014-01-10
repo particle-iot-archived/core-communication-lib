@@ -144,7 +144,9 @@ ConstructorFixture::ConstructorFixture()
   callbacks.millis = mock_millis;
   descriptor.num_functions = mock_num_functions;
   descriptor.copy_function_key = mock_copy_function_key;
-  descriptor.call_function = mock_call_function;
+  descriptor.request_execution = mock_request_execution;
+  descriptor.is_return_value_available = mock_is_retval_avail;
+  descriptor.get_function_return_value = mock_get_retval;
   descriptor.num_variables = mock_num_variables;
   descriptor.copy_variable_key = mock_copy_variable_key;
   descriptor.get_variable = mock_get_variable;
@@ -262,13 +264,18 @@ void ConstructorFixture::mock_copy_function_key(char *dst, int i)
   memcpy(dst, funcs[i], SparkProtocol::MAX_FUNCTION_KEY_LENGTH);
 }
 
-int ConstructorFixture::mock_call_function(const char *function_key,
-                                           const char *arg)
+void ConstructorFixture::mock_request_execution(const char *, const char *)
 {
-  const char *prevent_warning;
-  prevent_warning = function_key;
-  prevent_warning = arg;
   function_called = true;
+}
+
+bool ConstructorFixture::mock_is_retval_avail(void)
+{
+  return true;
+}
+
+int ConstructorFixture::mock_get_retval(void)
+{
   return 456;
 }
 

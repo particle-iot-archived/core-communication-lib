@@ -115,11 +115,19 @@ int mock_receive(unsigned char *buf, int buflen)
   return 0;
 }
 
-int mock_call_function(const char *function_key, const char *arg)
+void mock_request_execution(const char *, const char *)
 {
-  const char *prevent_warnings = function_key;
-  prevent_warnings = arg;
-  return 0;
+  // do nothing
+}
+
+bool mock_is_retval_avail(void)
+{
+  return true;
+}
+
+int mock_get_retval(void)
+{
+  return 42;
 }
 
 int mock_num_functions()
@@ -159,9 +167,11 @@ void CoAPFixture::init()
   callbacks.receive = mock_receive;
 
   SparkDescriptor descriptor;
-  descriptor.call_function = mock_call_function;
   descriptor.num_functions = mock_num_functions;
   descriptor.copy_function_key = mock_copy_function_key;
+  descriptor.request_execution = mock_request_execution;
+  descriptor.is_return_value_available = mock_is_retval_avail;
+  descriptor.get_function_return_value = mock_get_retval;
   descriptor.num_variables = mock_num_variables;
   descriptor.copy_variable_key = mock_copy_variable_key;
   descriptor.variable_type = mock_variable_type;

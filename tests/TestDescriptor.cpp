@@ -2,18 +2,23 @@
 #include "spark_descriptor.h"
 
 struct FunctionFixture {
-  static int execute_a_function(const char *func_key, const char *arg);
+  static void execute_a_function(const char *func_key, const char *arg);
+  static int get_retval(void);
   static int get_number_of_funcs(void);
   static void copy_a_function_key(char *destination, int function_index);
+  static int a_return_value;
 };
 
-int FunctionFixture::execute_a_function(const char *func_key,
-                                        const char *arg)
+int FunctionFixture::a_return_value = 2;
+
+void FunctionFixture::execute_a_function(const char *, const char *)
 {
-  const char *prevent_warning;
-  prevent_warning = func_key;
-  prevent_warning = arg;
-  return 99;
+  a_return_value = 99;
+}
+
+int FunctionFixture::get_retval(void)
+{
+  return a_return_value;
 }
 
 int FunctionFixture::get_number_of_funcs(void)
@@ -49,10 +54,12 @@ SUITE(Descriptor)
   TEST_FIXTURE(FunctionFixture, DescriptorCanCallRegisteredFunction)
   {
     SparkDescriptor descriptor;
-    descriptor.call_function = execute_a_function;
+    descriptor.request_execution = execute_a_function;
+    descriptor.get_function_return_value = get_retval;
     const char *function_key = "brew";
     const char *arg = "32,240";
-    int return_value = descriptor.call_function(function_key, arg);
+    descriptor.request_execution(function_key, arg);
+    int return_value = descriptor.get_function_return_value();
     CHECK_EQUAL(99, return_value);
   }
 }

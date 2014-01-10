@@ -156,7 +156,10 @@ class SparkProtocol
     bool initialized;
     bool updating;
     char function_arg[MAX_FUNCTION_ARG_LENGTH];
+    char pending_function_key[13];
+    char pending_function_token;
 
+    void send_pending_function_return(void);
     bool handle_received_message(void);
     unsigned short next_message_id();
     void encrypt(unsigned char *buf, int length);

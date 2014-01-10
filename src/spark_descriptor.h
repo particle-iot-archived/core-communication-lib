@@ -37,7 +37,9 @@ struct SparkDescriptor
 {
   int (*num_functions)(void);
   void (*copy_function_key)(char *destination, int function_index);
-  int (*call_function)(const char *function_key, const char *arg);
+  void (*request_execution)(const char *function_key, const char *arg);
+  bool (*is_return_value_available)(void);
+  int (*get_function_return_value)(void);
 
   int (*num_variables)(void);
   void (*copy_variable_key)(char *destination, int variable_index);

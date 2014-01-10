@@ -80,7 +80,9 @@ void SparkProtocol::init(const char *id,
 
   this->descriptor.num_functions = descriptor.num_functions;
   this->descriptor.copy_function_key = descriptor.copy_function_key;
-  this->descriptor.call_function = descriptor.call_function;
+  this->descriptor.request_execution = descriptor.request_execution;
+  this->descriptor.is_return_value_available = descriptor.is_return_value_available;
+  this->descriptor.get_function_return_value = descriptor.get_function_return_value;
   this->descriptor.num_variables = descriptor.num_variables;
   this->descriptor.copy_variable_key = descriptor.copy_variable_key;
   this->descriptor.variable_type = descriptor.variable_type;
@@ -117,6 +119,8 @@ int SparkProtocol::handshake(void)
 
   blocking_send(queue, 18);
 
+  memset(pending_function_key, 0, 13);
+
   return 0;
 }
 
@@ -124,6 +128,8 @@ int SparkProtocol::handshake(void)
 // Returns false if there was an error, and we are probably disconnected.
 bool SparkProtocol::event_loop(void)
 {
+  send_pending_function_return();
+
   int bytes_received = callback_receive(queue, 2);
   if (2 <= bytes_received)
   {
@@ -738,6 +744,24 @@ ProtocolState::Enum SparkProtocol::state()
 
 /********** Private methods **********/
 
+void SparkProtocol::send_pending_function_return(void)
+{
+  if (0 == pending_function_key[0])
+    return;
+
+  if (!descriptor.is_return_value_available())
+    return;
+
+  int return_value = descriptor.get_function_return_value();
+
+  queue[0] = 0;
+  queue[1] = 16;
+  function_return(queue + 2, pending_function_token, return_value);
+  blocking_send(queue, 18);
+
+  pending_function_key[0] = 0;
+}
+
 bool SparkProtocol::handle_received_message(void)
 {
   last_message_millis = callback_millis();
@@ -767,6 +791,14 @@ bool SparkProtocol::handle_received_message(void)
     }
     case CoAPMessageType::FUNCTION_CALL:
     {
+      if (0 != pending_function_key[0])
+      {
+        // got another function call while
+        // we're still waiting on one to return
+        // just drop the new one on the floor
+        return true;
+      }
+
       // send ACK
       *msg_to_send = 0;
       *(msg_to_send + 1) = 16;
@@ -778,10 +810,9 @@ bool SparkProtocol::handle_received_message(void)
       }
 
       // copy the function key
-      char function_key[13];
-      memset(function_key, 0, 13);
       int function_key_length = queue[7] & 0x0F;
-      memcpy(function_key, queue + 8, function_key_length);
+      memcpy(pending_function_key, queue + 8, function_key_length);
+      pending_function_key[function_key_length] = 0;
 
       // How long is the argument?
       int q_index = 8 + function_key_length;
@@ -810,16 +841,8 @@ bool SparkProtocol::handle_received_message(void)
       memcpy(function_arg, queue + q_index + 1, query_length);
       function_arg[query_length] = 0; // null terminate string
 
-      // call the given user function
-      int return_value = descriptor.call_function(function_key, function_arg);
-
-      // send return value
-      function_return(msg_to_send + 2, token, return_value);
-      if (0 > blocking_send(msg_to_send, 18))
-      {
-        // error
-        return false;
-      }
+      pending_function_token = token;
+      descriptor.request_execution(pending_function_key, function_arg);
       break;
     }
     case CoAPMessageType::VARIABLE_REQUEST:

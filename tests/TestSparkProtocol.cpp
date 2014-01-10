@@ -137,7 +137,10 @@ SUITE(SparkProtocolConstruction)
       0xb9, 0x1c, 0x09, 0x2d, 0xe2, 0x8b, 0x4f, 0xe0 };
     spark_protocol.handshake();
     bytes_received[0] = bytes_sent[0] = 0;
-    spark_protocol.event_loop();
+    spark_protocol.event_loop(); // request function execution
+    bytes_received[0] = 0;
+    message_to_receive[1] = 0;
+    spark_protocol.event_loop(); // send resulting value
     CHECK_ARRAY_EQUAL(expected, sent_buf_1, 18);
   }
 
