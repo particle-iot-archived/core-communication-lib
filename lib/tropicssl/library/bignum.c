@@ -62,6 +62,19 @@
 #define BITS_TO_LIMBS(i)  (((i) + biL - 1) / biL)
 #define CHARS_TO_LIMBS(i) (((i) + ciL - 1) / ciL)
 
+void *(*tropicssl_malloc)(size_t) = malloc;
+void (*tropicssl_free)(void *)    = free;
+
+/*
+ * Set custom memory implementation function pointers
+ */
+void set_tropicssl_memory_functions(void *(*tropicssl_memory_malloc)(size_t),
+                                    void (*tropicssl_memory_free)(void *))
+{
+	tropicssl_malloc = tropicssl_memory_malloc;
+	tropicssl_free = tropicssl_memory_free;
+}
+
 /*
  * Initialize one MPI
  */
@@ -86,7 +99,7 @@ void mpi_free(mpi * X)
 
 	if (X->p != NULL) {
 		memset(X->p, 0, X->n * ciL);
-		free(X->p);
+		tropicssl_free(X->p);
 	}
 
 	X->s = 1;
@@ -102,7 +115,7 @@ int mpi_grow(mpi * X, int nblimbs)
 	t_int *p;
 
 	if (X->n < nblimbs) {
-		if ((p = (t_int *) malloc(nblimbs * ciL)) == NULL)
+		if ((p = (t_int *) tropicssl_malloc(nblimbs * ciL)) == NULL)
 			return (1);
 
 		memset(p, 0, nblimbs * ciL);
@@ -110,7 +123,7 @@ int mpi_grow(mpi * X, int nblimbs)
 		if (X->p != NULL) {
 			memcpy(p, X->p, X->n * ciL);
 			memset(X->p, 0, X->n * ciL);
-			free(X->p);
+			tropicssl_free(X->p);
 		}
 
 		X->n = nblimbs;
