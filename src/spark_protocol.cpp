@@ -1003,6 +1003,7 @@ bool SparkProtocol::handle_received_message(void)
       break;
     }
     case CoAPMessageType::UPDATE_BEGIN:
+      int ret_value;
       // send ACK
       *msg_to_send = 0;
       *(msg_to_send + 1) = 16;
@@ -1013,14 +1014,16 @@ bool SparkProtocol::handle_received_message(void)
         return false;
       }
 
-      callback_prepare_for_firmware_update();
-      last_chunk_millis = callback_millis();
-      chunk_index = 0;
-      updating = true;
-
       // send update_reaady
       update_ready(msg_to_send + 2, token);
-      if (0 > blocking_send(msg_to_send, 18))
+      if((ret_value = blocking_send(msg_to_send, 18)) == 18)
+      {
+        callback_prepare_for_firmware_update();
+        last_chunk_millis = callback_millis();
+        chunk_index = 0;
+        updating = true;
+      }
+      else if (0 > ret_value)
       {
         // error
         return false;
