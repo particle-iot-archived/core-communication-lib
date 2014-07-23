@@ -823,9 +823,10 @@ bool SparkProtocol::handle_received_message(void)
   last_message_millis = callback_millis();
   expecting_ping_ack = false;
   int len = queue[0] << 8 | queue[1];
-  if (len > QUEUE_SIZE) { // TODO add sanity check on data, e.g. CRC
-      return false;
-  }
+  // The following condition prematurely returns false ???
+  // if (len > QUEUE_SIZE) { // TODO add sanity check on data, e.g. CRC
+  //     return false;
+  // }
   if (0 > blocking_receive(queue, len))
   {
     // error
