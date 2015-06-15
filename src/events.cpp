@@ -36,7 +36,7 @@ size_t event(uint8_t buf[], uint16_t message_id, const char *event_name,
   *p++ = 0xb1; // one-byte Uri-Path option
   *p++ = event_type;
 
-  size_t name_data_len = strnlen(event_name, 63);
+  size_t name_data_len = strnlen(event_name, 255);
   p += event_name_uri_path(p, event_name, name_data_len);
 
   if (60 != ttl)
@@ -49,7 +49,7 @@ size_t event(uint8_t buf[], uint16_t message_id, const char *event_name,
 
   if (NULL != data)
   {
-    name_data_len = strnlen(data, 63);
+    name_data_len = strnlen(data, 255);
 
     *p++ = 0xff;
     memcpy(p, data, name_data_len);
