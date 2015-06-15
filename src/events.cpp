@@ -49,7 +49,7 @@ size_t event(uint8_t buf[], uint16_t message_id, const char *event_name,
 
   if (NULL != data)
   {
-    name_data_len = strnlen(data, 63);
+    name_data_len = strnlen(data, 255);
 
     *p++ = 0xff;
     memcpy(p, data, name_data_len);
